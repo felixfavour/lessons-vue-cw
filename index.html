@@ -78,6 +78,7 @@
               <input type="search" v-model="searchQuery" placeholder="Search Lessons" v-on:input="searchLessons(searchQuery)">
             </label>
           </div>
+          <div v-if="lessonsLoading" class="loader"></div>
           <div class="lessons-catalog">
             <div v-for="lesson in lessons" class="lesson-card">
               <img v-bind:src="`images/${lesson.image}`" alt="">
@@ -212,6 +213,7 @@
         lessonsCopy: [],
         filterableLessons: [],
         cart: [],
+        lessonsLoading: true,
         sortingType: 'nothing',
         sortingDirection: 'asc',
         showLessons: true,
@@ -247,16 +249,6 @@
           this.sortingDirection = dir
           const lessonsCopy = this.lessons.slice(0)
           this.lessons = lessonsCopy.reverse()
-        },
-        searchLessons (query) {
-          const lessonsCopy = this.lessonsCopy.slice(0)
-          if (query === '') {
-            this.lessons = this.lessonsCopy
-          } else {       
-            this.lessons = lessonsCopy.filter(function (lesson) {
-              return JSON.stringify(lesson).toLowerCase().includes(query.toLowerCase())
-            })
-          }
         },
         submitOrder: function () {
           alert('Thank you, your order has been submitted.')
@@ -310,12 +302,31 @@
           fetch('https://lessons-api-cw.herokuapp.com/collection/lesson').then(function (response) {
             response.json().then(
               function (json) {
+                app.lessonsLoading = false
                 app.lessons = json
                 app.lessonsCopy = json
                 app.filterableLessons = json
               }
             )
           })
+        },
+        addNewOrder () {},
+        updateLessonSpaces () {},
+        searchLessons (query) {
+          const lessonsCopy = this.lessonsCopy.slice(0)
+          if (query === '') {
+            this.lessons = this.lessonsCopy
+          } else {
+            app.lessonsLoading = true
+            fetch(`https://lessons-api-cw.herokuapp.com/search/lesson?query=${query}`).then(function (response) {
+              response.json().then(
+                function (json) {
+                  app.lessons = json
+                  app.lessonsLoading = false
+                }
+              )
+            })
+          }
         }
       },
       computed: {
