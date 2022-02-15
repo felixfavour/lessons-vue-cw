@@ -194,13 +194,13 @@ button:disabled {
   flex-direction: column;
   justify-content: space-between;
 }
-.lesson-card .lesson-subject-and-price {
+.lesson-card .lesson-topic-and-price {
   display: flex;
   justify-content: space-between;
   margin-bottom: 6px;
   font-weight: 700;
 }
-.lesson-subject {
+.lesson-topic {
   font-size: 17px;
 }
 .lesson-price {
@@ -209,7 +209,7 @@ button:disabled {
 .lesson-card .stars {
   margin-bottom: 10px;
 }
-.lesson-location, .lesson-spaces {
+.lesson-location, .lesson-space {
   font-weight: 400;
   font-size: 12px;
   line-height: 20px;
@@ -223,13 +223,13 @@ button:disabled {
   animation: come-up 0.2s ease-in-out;
   -webkit-animation: come-up 0.2s ease-in-out;
 }
-.lesson-spaces.lightblue {
+.lesson-space.lightblue {
   color: #00B2FF;
 }
-.lesson-spaces.red {
+.lesson-space.red {
   color: #FF0000;
 }
-.lesson-spaces.fade {
+.lesson-space.fade {
   opacity: 0.5;
 }
 

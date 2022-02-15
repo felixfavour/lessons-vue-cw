@@ -7,7 +7,6 @@
   <title>After School Lessons</title>
   <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
   <link rel="stylesheet" href="styles.css">
-  <script src="lessons.js"></script>
 </head>
 <body>
   <div id="app">
@@ -39,8 +38,8 @@
             <button v-bind:class="['inverse-btn', { 'primary-btn':sortingType === 'nothing'}]" v-on:click="sortLessons('nothing')">
               Default
             </button>
-            <button v-bind:class="['inverse-btn', { 'primary-btn':sortingType === 'subject'}]" v-on:click="sortLessons('subject')">
-              Subject
+            <button v-bind:class="['inverse-btn', { 'primary-btn':sortingType === 'topic'}]" v-on:click="sortLessons('topic')">
+              Topic
             </button>
             <button v-bind:class="['inverse-btn', { 'primary-btn':sortingType === 'location'}]" v-on:click="sortLessons('location')">
               Location
@@ -81,12 +80,12 @@
           </div>
           <div class="lessons-catalog">
             <div v-for="lesson in lessons" class="lesson-card">
-              <img v-bind:src="lesson.image" alt="">
+              <img v-bind:src="`images/${lesson.image}`" alt="">
               <div class="lesson-info">
                 <div class="lesson-info-top">
-                  <div class="lesson-subject-and-price">
-                    <span class="lesson-subject">
-                      {{ lesson.subject }}
+                  <div class="lesson-topic-and-price">
+                    <span class="lesson-topic">
+                      {{ lesson.topic }}
                     </span>
                     <span class="lesson-price">
                       ${{ lesson.price }}
@@ -95,17 +94,17 @@
                   <div class="lesson-location">
                     {{ lesson.location }}
                   </div>
-                  <div v-if="lesson.spaces >= 5" class="lesson-spaces">
-                    {{ lesson.spaces }} spaces
+                  <div v-if="lesson.space >= 5" class="lesson-space">
+                    {{ lesson.space }} spaces
                   </div>
-                  <div v-else-if="lesson.spaces >= 2" class="lesson-spaces lightblue come-up">
-                    {{ lesson.spaces }} spaces left!
+                  <div v-else-if="lesson.space >= 2" class="lesson-space lightblue come-up">
+                    {{ lesson.space }} spaces left!
                   </div>
-                  <div v-else-if="lesson.spaces === 1" class="lesson-spaces red">
+                  <div v-else-if="lesson.space === 1" class="lesson-space red">
                     Only one space left!
                   </div>
-                  <div v-else class="lesson-spaces fade">
-                    No spaces left
+                  <div v-else class="lesson-space fade">
+                    No space left
                   </div>
                 </div>
                 <div class="lesson-info-bottom">
@@ -143,12 +142,12 @@
           </div>
           <div class="lessons-catalog">
             <div v-for="(lesson, index) in cart" class="lesson-card">
-              <img v-bind:src="lesson.image" alt="">
+              <img v-bind:src="`images/${lesson.image}`" alt="">
               <div class="lesson-info">
                 <div class="lesson-info-top">
-                  <div class="lesson-subject-and-price">
-                    <span class="lesson-subject">
-                      {{ lesson.subject }}
+                  <div class="lesson-topic-and-price">
+                    <span class="lesson-topic">
+                      {{ lesson.topic }}
                     </span>
                     <span class="lesson-price">
                       ${{ lesson.price }}
@@ -157,8 +156,8 @@
                   <div class="lesson-location">
                     {{ lesson.location }}
                   </div>
-                  <!-- <div class="lesson-spaces">
-                    {{ lesson.spaces }} spaces
+                  <!-- <div class="lesson-space">
+                    {{ lesson.space }} space
                   </div> -->
                 </div>
                 <div class="lesson-info-bottom">
@@ -209,9 +208,9 @@
     const app = new Vue({
       el: '#app',
       data: {
-        lessons: lessons,
-        lessonsCopy: lessons,
-        filterableLessons: lessons,
+        lessons: [],
+        lessonsCopy: [],
+        filterableLessons: [],
         cart: [],
         sortingType: 'nothing',
         sortingDirection: 'asc',
@@ -220,10 +219,13 @@
         phone: '',
         searchQuery: ''
       },
+      created: function () {
+        this.getLessons()
+      },
       methods: {
         addToCart: function (lesson) {
           this.cart.push(lesson)
-          lesson.spaces--
+          lesson.space--
         },
         removeFromCart: function (index) {
           this.cart.splice(index, 1)
@@ -233,7 +235,7 @@
           }
         },
         canAddToCart: function (lesson) {
-          return lesson.spaces > 0
+          return lesson.space > 0
         },
         goToLessons: function () {
           this.showLessons = true
@@ -268,11 +270,11 @@
             case 'nothing': 
               this.lessons = lessonsCopy
               break
-            case 'subject': 
+            case 'topic': 
               compare = function (a, b) {
-                if (a.subject.toLowerCase() < b.subject.toLowerCase()) {
+                if (a.topic.toLowerCase() < b.topic.toLowerCase()) {
                   return -1
-                } else if (b.subject.toLowerCase() < a.subject.toLowerCase()) {
+                } else if (b.topic.toLowerCase() < a.topic.toLowerCase()) {
                   return 1
                 }
                 return 0
@@ -298,12 +300,22 @@
               break
             case 'availability': 
               compare = function (a, b) {
-                return a.spaces - b.spaces
+                return a.space - b.space
               }
               this.lessons = lessonsCopy.sort(compare)
               break
           }
-          
+        },
+        getLessons () {
+          fetch('https://lessons-api-cw.herokuapp.com/collection/lesson').then(function (response) {
+            response.json().then(
+              function (json) {
+                app.lessons = json
+                app.lessonsCopy = json
+                app.filterableLessons = json
+              }
+            )
+          })
         }
       },
       computed: {
