@@ -181,6 +181,7 @@
       </section>
       <section class="checkout-box page">
         <div class="inner">
+          <div v-if="orderLoading" class="loader"></div>
           <h2>Checkout</h2>
           <form>
             <label v-bind:class="{ 'error-input': !nameValid }" for="name">
@@ -197,7 +198,7 @@
                 Phone Number must contain only numbers
               </span>
             </label>
-            <button v-bind:disabled="!(nameValid && phoneNumberValid)" type="button" class="primary-btn" v-on:click="submitOrder">
+            <button v-bind:disabled="!(nameValid && phoneNumberValid)" type="button" class="primary-btn" v-on:click="submitOrdersForAllLessons">
               Checkout
             </button>
           </form>
@@ -214,6 +215,7 @@
         filterableLessons: [],
         cart: [],
         lessonsLoading: true,
+        orderLoading: false,
         sortingType: 'nothing',
         sortingDirection: 'asc',
         showLessons: true,
@@ -249,9 +251,6 @@
           this.sortingDirection = dir
           const lessonsCopy = this.lessons.slice(0)
           this.lessons = lessonsCopy.reverse()
-        },
-        submitOrder: function () {
-          alert('Thank you, your order has been submitted.')
         },
         sortLessons: function (type) {
           this.sortingType = type
@@ -298,7 +297,7 @@
               break
           }
         },
-        getLessons () {
+        getLessons: function () {
           fetch('https://lessons-api-cw.herokuapp.com/collection/lesson').then(function (response) {
             response.json().then(
               function (json) {
@@ -310,14 +309,58 @@
             )
           })
         },
-        addNewOrder () {},
-        updateLessonSpaces () {},
-        searchLessons (query) {
+        submitOrdersForAllLessons: function () {
+          for (const lessonId of this.uniqueLessonsInCart) {
+            const lessonSpaces = this.cart.filter((lesson) => lesson._id === lessonId).length
+            this.submitOrder(lessonId, lessonSpaces)
+          }
+        },
+        submitOrder: function (lessonId, spaces) {
+          this.orderLoading = true
+          fetch('https://lessons-api-cw.herokuapp.com/collection/order', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name: this.name,
+              phone_number: this.phone,
+              lesson_id: lessonId,
+              no_of_spaces: spaces
+            })
+          }).then(function (response) {
+            response.json().then(function () {
+                // If order is successfully submitted, update lesson spaces
+                app.updateLessonSpaces(lessonId, spaces)
+              }
+            )
+          })
+        },
+        updateLessonSpaces: function (lessonId, spaces) {
+          this.orderLoading = true
+          fetch(`https://lessons-api-cw.herokuapp.com/collection/lesson/${lessonId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              space: 5 - spaces
+            })
+          }).then(function (response) {
+            response.json().then(function () {
+                app.orderLoading = false
+                app.goToLessons()
+                app.cart = []
+              }
+            )
+          })
+        },
+        searchLessons: function (query) {
           const lessonsCopy = this.lessonsCopy.slice(0)
           if (query === '') {
             this.lessons = this.lessonsCopy
           } else {
-            app.lessonsLoading = true
+            this.lessonsLoading = true
             fetch(`https://lessons-api-cw.herokuapp.com/search/lesson?query=${query}`).then(function (response) {
               response.json().then(
                 function (json) {
@@ -330,6 +373,11 @@
         }
       },
       computed: {
+        uniqueLessonsInCart () {
+          const lessons = new Set()
+          this.cart.forEach((lesson) => lessons.add(lesson._id))
+          return Array.from(lessons)
+        },
         showCheckout () {
           return this.cart.length > 0
         },
